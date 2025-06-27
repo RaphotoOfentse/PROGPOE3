@@ -1,4 +1,5 @@
 ﻿using CyberAwarenessBotGUI;
+using CyberChatbotLib;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -23,7 +24,17 @@ namespace CyberAwarenessBotGUI
 
         private CyberQuiz quiz = new CyberQuiz();
         private bool inQuizMode = false;
+        private List<ChatAction> chatHistory = new List<ChatAction>();
 
+        Dictionary<string, string[]> intentKeywords = new Dictionary<string, string[]>()
+{
+    { "add_task", new string[] { "add task", "new task", "remind me", "set reminder", "schedule", "create task" } },
+    { "start_quiz", new string[] { "start quiz", "quiz time", "ask me questions", "test my knowledge" } },
+    { "cyber_password", new string[] { "password", "change password", "strong password", "update password" } },
+    { "cyber_privacy", new string[] { "privacy", "check privacy", "privacy settings", "data protection" } },
+    { "cyber_phishing", new string[] { "phishing", "suspicious link", "fake email", "avoid scam" } },
+    // Add more as needed
+};
         public ChatbotLogic(string userName, TaskManager taskManager)
         {
             this.name = userName;
@@ -35,11 +46,38 @@ namespace CyberAwarenessBotGUI
             { "privacy", ShowPrivacyAdvice }
         };
         }
-
+         
         public string ProcessInput(string input)
         {
+            string intent = DetectIntent(input);
+            input = NormalizeInput(input);
             input = input.ToLower().Trim();
             string response = "";
+
+            switch (intent)
+            {
+                case "add_task":
+                    // check for phrase like "add a task to" or "remind me to"
+                    break;
+                case "start_quiz":
+                    // start quiz logic
+                    break;
+                case "cyber_password":
+                    response = CyberChatbot.GetPasswordSafetyTips();
+                    break;
+                case "cyber_privacy":
+                    response = CyberChatbot.GetPrivacyAdvice();
+                    break;
+                case "cyber_phishing":
+                    response = CyberChatbot.GetScamAdvice();
+                    break;
+                case "show_summary":
+                    // loop through chatHistory and show summary
+                    break;
+                default:
+                    response = "I'm not sure how to respond to that.";
+                    break;
+            }
 
             if (inQuizMode)
             {
@@ -53,11 +91,7 @@ namespace CyberAwarenessBotGUI
                         int score = quiz.GetScore();
                         int total = quiz.GetTotalQuestions();
                         response += $"Quiz Over! 🎉 You scored {score}/{total}.\n";
-
-                        if (score >= 8)
-                            response += "Great job! You're a cybersecurity pro. 🔐";
-                        else
-                            response += "Keep learning to stay safe online! 🛡️";
+                        response += score >= 8 ? "Great job! You're a cybersecurity pro. 🔐" : "Keep learning to stay safe online! 🛡️";
 
                         inQuizMode = false;
                         quiz.ResetQuiz();
@@ -90,19 +124,55 @@ namespace CyberAwarenessBotGUI
                 DateTime reminderDate = DateTime.Now.AddDays(days);
 
                 taskManager.AddTask(pendingTaskTitle, pendingTaskDescription, reminderDate);
+                chatHistory.Add(new ChatAction { Description = pendingTaskTitle, ReminderDate = reminderDate });
+
                 response = $"Got it! I'll remind you in {days} day(s) 📅";
 
                 awaitingReminderConfirmation = false;
                 pendingTaskTitle = null;
                 pendingTaskDescription = null;
             }
-            else if (input.Contains("add task") || input.Contains("review privacy"))
+            else if (input.Contains("remind me to") || input.Contains("set a reminder to"))
             {
-                pendingTaskTitle = "Review Privacy Settings";
-                pendingTaskDescription = "Review account privacy settings to ensure your data is protected.";
+                string task = ExtractAfter(input, "remind me to");
+                if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "set a reminder to");
+
+                DateTime reminderDate = input.Contains("tomorrow") ? DateTime.Now.AddDays(1) : DateTime.Now;
+
+                taskManager.AddTask(task, "", reminderDate);
+                chatHistory.Add(new ChatAction { Description = task, ReminderDate = reminderDate });
+
+                response = $"Reminder set for \"{ToTitleCase(task)}\" on {reminderDate.ToShortDateString()}";
+            }
+            else if (input.Contains("add a task to") || input.Contains("create task to") || input.Contains("note to"))
+            {
+                string task = ExtractAfter(input, "add a task to");
+                if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "create task to");
+                if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "note to");
+
+                pendingTaskTitle = ToTitleCase(task);
+                pendingTaskDescription = task;
                 awaitingReminderConfirmation = true;
 
-                response = $"Task added with the description \"{pendingTaskDescription}\". Would you like a reminder?";
+                taskManager.AddTask(pendingTaskTitle, pendingTaskDescription, null);
+                chatHistory.Add(new ChatAction { Description = pendingTaskTitle, ReminderDate = null });
+
+                response = $"Task added: \"{pendingTaskTitle}\". Would you like to set a reminder for this task?";
+            }
+            else if (input.Contains("what have you done") || input.Contains("summary") || input.Contains("recent actions"))
+            {
+                if (chatHistory.Count == 0)
+                {
+                    response = "I haven't done anything yet! Try asking me to add a task or set a reminder. 📋";
+                }
+                else
+                {
+                    response = "Here's a summary of recent actions:\n";
+                    for (int i = 0; i < chatHistory.Count; i++)
+                    {
+                        response += $"{i + 1}. {chatHistory[i]}\n";
+                    }
+                }
             }
             else if (input.Contains("recommend"))
             {
@@ -122,13 +192,30 @@ namespace CyberAwarenessBotGUI
             }
             else
             {
-                response = "I'm not sure how to respond to that. Try asking me about scams, passwords, or tasks!";
+                response = CyberChatbot.GetResponse(input, name);
             }
 
             return response;
         }
+        public string ExtractAfter(string input, string phrase)
+        {
+            int index = input.IndexOf(phrase);
+            if(index != -1)
+            {
+                return input.Substring(index + phrase.Length).Trim();
+            }
+            return "";
+        }
 
+        public string ToTitleCase(string input)
+        {
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.ToLower());
+        }
 
+        private string NormalizeInput(string input)
+        {
+            return input.ToLower().Trim();
+        }
         private int ExtractDaysFromInput(string input)
         {
             var parts = input.Split(' ');
@@ -138,6 +225,19 @@ namespace CyberAwarenessBotGUI
                     return days;
             }
             return 1;
+        }
+
+        private string DetectIntent(string input)
+        {
+            foreach (var intent in intentKeywords)
+            {
+                foreach(var phrase in intent.Value)
+                {
+                    if (input.Contains(phrase))
+                        return intent.Key;
+                }
+            }
+            return "unknown";
         }
 
         private string ShowScamAdvice() => "Scam tip: Never click suspicious links or share personal info online.";

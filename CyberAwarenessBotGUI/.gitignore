@@ -1,0 +1,19 @@
+# Ignore Visual Studio temporary files
+.vs/
+*.user
+*.suo
+
+# Build results
+bin/
+obj/
+
+# Other temp files
+*.log
+*.cache
+*.db
+*.DS_Store
+*.pidb
+*.sln.docstates
+
+# User-specific files
+*.userprefs

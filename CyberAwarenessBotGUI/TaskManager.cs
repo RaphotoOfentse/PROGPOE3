@@ -8,7 +8,7 @@ namespace CyberAwarenessBotGUI
     {
         public string Title { get; set; }
         public string Description { get; set; }
-        public DateTime ReminderDate { get; set; }
+        public DateTime? ReminderDate { get; set; }
         public bool IsCompleted { get; set; }
     }
 
@@ -17,14 +17,14 @@ namespace CyberAwarenessBotGUI
         private List<TaskItem> tasks = new List<TaskItem>();
 
         // Updated method to accept 3 parameters
-        public void AddTask(string title, string description, DateTime reminderDate)
+        public void AddTask(string title, string description, DateTime? reminderDate)
         {
             tasks.Add(new TaskItem
             {
                 Title = title,
                 Description = description,
                 ReminderDate = reminderDate,
-                IsCompleted = false
+                //IsCompleted = false
             });
         }
 

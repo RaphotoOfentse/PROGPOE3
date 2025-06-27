@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChatAction.cs" />
     <Compile Include="ChatbotLogic.cs" />
     <Compile Include="CyberChatbot.cs" />
     <Compile Include="CyberQuiz.cs" />
