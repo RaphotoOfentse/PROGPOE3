@@ -1,0 +1,10 @@
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\bin\Debug\CyberAwarenessBotGUI.exe.config
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\bin\Debug\CyberAwarenessBotGUI.exe
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\bin\Debug\CyberAwarenessBotGUI.pdb
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.csproj.AssemblyReference.cache
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.Form1.resources
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.Properties.Resources.resources
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.csproj.GenerateResource.cache
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.csproj.CoreCompileInputs.cache
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.exe
+C:\Users\rapho\Downloads\docs\School\Cloud dev\POE\CyberAwarenessBotGUI\obj\Debug\CyberAwarenessBotGUI.pdb
