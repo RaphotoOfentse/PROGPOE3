@@ -17,61 +17,61 @@ namespace CyberAwarenessBotGUI
         {
             Questions = new List<Question>
             {
-                new Question("What is phishing?", new[] {
+                new Question("1.What is phishing?", new[] {
                     "A method of catching fish online",
                     "A cyberattack that tricks you into giving personal information",
                     "A way to speed up your internet",
                     "A security software"
                 }, 1),
 
-                new Question("True or False: Using '123456' as a password is safe.", new[] {
+                new Question("2. True or False: Using '123456' as a password is safe.", new[] {
                     "True", "False"
                 }, 1),
 
-                new Question("What should you do if you receive a suspicious email?", new[] {
+                new Question("3. What should you do if you receive a suspicious email?", new[] {
                     "Click all links to check them",
                     "Reply with your personal details",
                     "Delete it or report it as spam",
                     "Forward it to a friend"
                 }, 2),
 
-                new Question("True or False: Public Wi-Fi is always secure.", new[] {
+                new Question("4. True or False: Public Wi-Fi is always secure.", new[] {
                     "True", "False"
                 }, 1),
 
-                new Question("What is two-factor authentication (2FA)?", new[] {
+                new Question("5. What is two-factor authentication (2FA)?", new[] {
                     "A way to double your internet speed",
                     "A method of verifying your identity using two methods",
                     "A password reset tool",
                     "A virus removal technique"
                 }, 1),
 
-                new Question("What’s the best way to create a strong password?", new[] {
+                new Question("6. What’s the best way to create a strong password?", new[] {
                     "Use your birthdate",
                     "Use 'password123'",
                     "Use a mix of upper/lowercase letters, numbers, and symbols",
                     "Use your pet's name"
                 }, 2),
 
-                new Question("True or False: You should share your passwords with trusted friends.", new[] {
+                new Question("7. True or False: You should share your passwords with trusted friends.", new[] {
                     "True", "False"
                 }, 1),
 
-                new Question("Which of these is a social engineering tactic?", new[] {
+                new Question("8. Which of these is a social engineering tactic?", new[] {
                     "Brute force attack",
                     "Firewall",
                     "Impersonation",
                     "Antivirus scan"
                 }, 2),
 
-                new Question("Why are software updates important?", new[] {
+                new Question("9. Why are software updates important?", new[] {
                     "They take up space",
                     "They add new viruses",
                     "They patch security vulnerabilities",
                     "They delete your data"
                 }, 2),
 
-                new Question("What is the purpose of a firewall?", new[] {
+                new Question("10. What is the purpose of a firewall?", new[] {
                     "To block unauthorized access to your network",
                     "To make your PC run slower",
                     "To change your wallpaper",

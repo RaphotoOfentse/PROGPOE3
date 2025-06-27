@@ -33,7 +33,15 @@ namespace CyberAwarenessBotGUI
     { "cyber_password", new string[] { "password", "change password", "strong password", "update password" } },
     { "cyber_privacy", new string[] { "privacy", "check privacy", "privacy settings", "data protection" } },
     { "cyber_phishing", new string[] { "phishing", "suspicious link", "fake email", "avoid scam" } },
-    // Add more as needed
+      { "show_summary", new string[] {
+        "summary",
+        "recent actions",
+        "what have you done",
+        "what have you done for me",
+        "show history",
+        "what did i ask",
+        "recap"
+    } }
 };
         public ChatbotLogic(string userName, TaskManager taskManager)
         {
@@ -49,35 +57,10 @@ namespace CyberAwarenessBotGUI
          
         public string ProcessInput(string input)
         {
-            string intent = DetectIntent(input);
             input = NormalizeInput(input);
+            string intent = DetectIntent(input);
             input = input.ToLower().Trim();
             string response = "";
-
-            switch (intent)
-            {
-                case "add_task":
-                    // check for phrase like "add a task to" or "remind me to"
-                    break;
-                case "start_quiz":
-                    // start quiz logic
-                    break;
-                case "cyber_password":
-                    response = CyberChatbot.GetPasswordSafetyTips();
-                    break;
-                case "cyber_privacy":
-                    response = CyberChatbot.GetPrivacyAdvice();
-                    break;
-                case "cyber_phishing":
-                    response = CyberChatbot.GetScamAdvice();
-                    break;
-                case "show_summary":
-                    // loop through chatHistory and show summary
-                    break;
-                default:
-                    response = "I'm not sure how to respond to that.";
-                    break;
-            }
 
             if (inQuizMode)
             {
@@ -103,22 +86,75 @@ namespace CyberAwarenessBotGUI
                         for (int i = 0; i < q.Options.Length; i++)
                             response += $"{i + 1}. {q.Options[i]}\n";
                     }
+                    return response;
                 }
                 else
                 {
                     response = "Please enter the number corresponding to your answer (e.g., 1, 2, 3...).";
                 }
             }
-            else if (input.Contains("quiz") || input.Contains("play game"))
+            switch (intent)
             {
-                inQuizMode = true;
-                quiz.ResetQuiz();
-                var q = quiz.GetCurrentQuestion();
-                response = $"🧠 Cybersecurity Quiz Started!\n\n{q.Text}\n";
-                for (int i = 0; i < q.Options.Length; i++)
-                    response += $"{i + 1}. {q.Options[i]}\n";
+                case "add_task":
+                    string task = ExtractAfter(input, "add task");
+                    if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "add a task to");
+                    if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "remind me to");
+                    if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "note to");
+                    if (string.IsNullOrEmpty(task)) task = input; // fallback
+
+                    pendingTaskTitle = ToTitleCase(task);
+                    pendingTaskDescription = task;
+                    awaitingReminderConfirmation = true;
+
+                    taskManager.AddTask(pendingTaskTitle, pendingTaskDescription, null);
+                    chatHistory.Add(new ChatAction { Description = pendingTaskTitle });
+
+                    response = $"Task added: \"{pendingTaskTitle}\". Would you like to set a reminder for this task?";
+                    break;
+
+                case "start_quiz":
+                    inQuizMode = true;
+                    quiz.ResetQuiz();
+                    var q = quiz.GetCurrentQuestion();
+                    response = $"🧠 Cybersecurity Quiz Started!\n\n{q.Text}\n";
+                    for (int i = 0; i < q.Options.Length; i++)
+                        response += $"{i + 1}. {q.Options[i]}\n";
+                    break;
+
+                case "cyber_password":
+                    response = CyberChatbot.GetPasswordSafetyTips();
+                    break;
+
+                case "cyber_privacy":
+                    response = CyberChatbot.GetPrivacyAdvice();
+                    break;
+
+                case "cyber_phishing":
+                    response = CyberChatbot.GetScamAdvice();
+                    break;
+
+                case "show_summary":
+                    if (chatHistory.Count == 0)
+                    {
+                        response = "I haven't done anything yet! Try asking me to add a task or set a reminder. 📋";
+                    }
+                    else
+                    {
+                        response = "Here's a summary of recent actions:\n";
+                        for (int i = 0; i < chatHistory.Count; i++)
+                        {
+                            response += $"{i + 1}. {chatHistory[i]}\n";
+                        }
+                    }
+                    break;
+
+                default:
+                    response = null;
+                    break;
             }
-            else if (awaitingReminderConfirmation && input.Contains("remind"))
+
+
+                if (awaitingReminderConfirmation && input.Contains("remind"))
             {
                 int days = ExtractDaysFromInput(input);
                 DateTime reminderDate = DateTime.Now.AddDays(days);
@@ -131,68 +167,51 @@ namespace CyberAwarenessBotGUI
                 awaitingReminderConfirmation = false;
                 pendingTaskTitle = null;
                 pendingTaskDescription = null;
+
+                return response;
             }
-            else if (input.Contains("remind me to") || input.Contains("set a reminder to"))
+
+            // Handle reminder confirmation
+            if (awaitingReminderConfirmation && input.Contains("remind"))
             {
-                string task = ExtractAfter(input, "remind me to");
-                if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "set a reminder to");
+                int days = ExtractDaysFromInput(input);
+                DateTime reminderDate = DateTime.Now.AddDays(days);
 
-                DateTime reminderDate = input.Contains("tomorrow") ? DateTime.Now.AddDays(1) : DateTime.Now;
+                taskManager.AddTask(pendingTaskTitle, pendingTaskDescription, reminderDate);
+                chatHistory.Add(new ChatAction { Description = pendingTaskTitle, ReminderDate = reminderDate });
 
-                taskManager.AddTask(task, "", reminderDate);
-                chatHistory.Add(new ChatAction { Description = task, ReminderDate = reminderDate });
+                response = $"Got it! I'll remind you in {days} day(s) 📅";
 
-                response = $"Reminder set for \"{ToTitleCase(task)}\" on {reminderDate.ToShortDateString()}";
+                awaitingReminderConfirmation = false;
+                pendingTaskTitle = null;
+                pendingTaskDescription = null;
+
+                return response;
             }
-            else if (input.Contains("add a task to") || input.Contains("create task to") || input.Contains("note to"))
+
+            // Catch any leftover fallback logic if no intent was matched
+            if (string.IsNullOrEmpty(response))
             {
-                string task = ExtractAfter(input, "add a task to");
-                if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "create task to");
-                if (string.IsNullOrEmpty(task)) task = ExtractAfter(input, "note to");
-
-                pendingTaskTitle = ToTitleCase(task);
-                pendingTaskDescription = task;
-                awaitingReminderConfirmation = true;
-
-                taskManager.AddTask(pendingTaskTitle, pendingTaskDescription, null);
-                chatHistory.Add(new ChatAction { Description = pendingTaskTitle, ReminderDate = null });
-
-                response = $"Task added: \"{pendingTaskTitle}\". Would you like to set a reminder for this task?";
-            }
-            else if (input.Contains("what have you done") || input.Contains("summary") || input.Contains("recent actions"))
-            {
-                if (chatHistory.Count == 0)
+                if (input.Contains("recommend"))
                 {
-                    response = "I haven't done anything yet! Try asking me to add a task or set a reminder. 📋";
+                    response = RecommendCyberTasks();
+                }
+                else if (input.Contains("complete"))
+                {
+                    var completed = taskManager.MarkRandomTaskComplete();
+                    response = completed != null
+                        ? $"Nice work, {name}! ✅ You've completed: {completed.Title}"
+                        : $"You don't have any tasks to complete right now.";
+                }
+                else if (cyberTopics.Any(kvp => input.Contains(kvp.Key)))
+                {
+                    currentTopic = cyberTopics.First(kvp => input.Contains(kvp.Key)).Key;
+                    response = cyberTopics[currentTopic]();
                 }
                 else
                 {
-                    response = "Here's a summary of recent actions:\n";
-                    for (int i = 0; i < chatHistory.Count; i++)
-                    {
-                        response += $"{i + 1}. {chatHistory[i]}\n";
-                    }
+                    response = CyberChatbot.GetResponse(input, name);
                 }
-            }
-            else if (input.Contains("recommend"))
-            {
-                response = RecommendCyberTasks();
-            }
-            else if (input.Contains("complete"))
-            {
-                var completed = taskManager.MarkRandomTaskComplete();
-                response = completed != null
-                    ? $"Nice work, {name}! ✅ You've completed: {completed.Title}"
-                    : $"You don't have any tasks to complete right now.";
-            }
-            else if (cyberTopics.Any(kvp => input.Contains(kvp.Key)))
-            {
-                currentTopic = cyberTopics.First(kvp => input.Contains(kvp.Key)).Key;
-                response = cyberTopics[currentTopic]();
-            }
-            else
-            {
-                response = CyberChatbot.GetResponse(input, name);
             }
 
             return response;
@@ -202,7 +221,8 @@ namespace CyberAwarenessBotGUI
             int index = input.IndexOf(phrase);
             if(index != -1)
             {
-                return input.Substring(index + phrase.Length).Trim();
+                string result = input.Substring(index + phrase.Length).Trim();
+                return result.TrimStart('-', ':').Trim();
             }
             return "";
         }
@@ -214,7 +234,11 @@ namespace CyberAwarenessBotGUI
 
         private string NormalizeInput(string input)
         {
-            return input.ToLower().Trim();
+            return new string(input
+        .Where(c => !char.IsPunctuation(c))
+        .ToArray())
+        .ToLower()
+        .Trim();
         }
         private int ExtractDaysFromInput(string input)
         {
@@ -229,8 +253,19 @@ namespace CyberAwarenessBotGUI
 
         private string DetectIntent(string input)
         {
+            input = input.ToLower();
+
+            // PRIORITIZE task-related keywords first
+            string[] taskKeywords = { "add task", "add a task to", "remind me", "remind me to", "note to", "set reminder", "schedule", "create task" };
+            foreach (string keyword in taskKeywords)
+            {
+                if (input.Contains(keyword))
+                    return "add_task";
+            }
+            //Checks other intents
             foreach (var intent in intentKeywords)
             {
+                if(intent.Key == "add task") continue; //Already checked
                 foreach(var phrase in intent.Value)
                 {
                     if (input.Contains(phrase))
